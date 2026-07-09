@@ -1,0 +1,69 @@
+name: Make My IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  compile:
+    runs-on: macos-14
+    steps:
+      - name: Pull Code
+        uses: actions/checkout@v4
+
+      - name: Clear Old Folders
+        run: |
+          rm -rf Payload
+          rm -rf project_extracted
+
+      - name: Unzip Code Files
+        run: |
+          if ls *.zip 1> /dev/null 2>&1; then
+            unzip -q *.zip -d project_extracted
+          else
+            mkdir project_extracted
+            cp -R . project_extracted/ 2>/dev/null || true
+          fi
+
+       Silber:
+      - name: Build App Directory
+        run: |
+          mkdir -p Payload/CustomAudiobookReader.app
+
+      - name: Compile Everything
+        run: |
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          SWIFT_FILES=$(find project_extracted -name "*.swift" ! -path "*/.*")
+          
+          if [ -z "$SWIFT_FILES" ]; then
+            echo "Searching root instead..."
+            SWIFT_FILES=$(find . -name "*.swift" ! -path "*/.*" ! -path "./Payload/*")
+          fi
+          
+          if [ -z "$SWIFT_FILES" ]; then
+            echo "ERROR: No Swift files found!"
+            exit 1
+          fi
+          
+          swiftc -target arm64-apple-ios15.0 -sdk "$SDK_PATH" $SWIFT_FILES -o Payload/CustomAudiobookReader.app/CustomAudiobookReader
+
+      - name: Link Configuration
+        run: |
+          PLIST_PATH=$(find . -name "Info.plist" ! -path "./Payload/*" | head -n 1)
+          if [ -n "$PLIST_PATH" ]; then
+            cp "$PLIST_PATH" Payload/CustomAudiobookReader.app/Info.plist
+          else
+            echo "ERROR: Missing Info.plist"
+            exit 1
+          fi
+
+      - name: Create IPA
+        run: |
+          zip -r AppBundle.ipa Payload
+
+      - name: Download Link
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReadyToSideload
+          path: AppBundle.ipa
