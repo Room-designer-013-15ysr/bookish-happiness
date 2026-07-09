@@ -45,7 +45,8 @@ jobs:
             exit 1
           fi
           
-          swiftc -target arm64-apple-ios15.0 -sdk "$SDK_PATH" $SWIFT_FILES -o Payload/CustomAudiobookReader.app/CustomAudiobookReader
+          # Changed target to ios17.0 to support your Observation code features!
+          swiftc -target arm64-apple-ios17.0 -sdk "$SDK_PATH" $SWIFT_FILES -o Payload/CustomAudiobookReader.app/CustomAudiobookReader
 
       - name: Link Configuration
         run: |
