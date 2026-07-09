@@ -26,7 +26,6 @@ jobs:
             cp -R . project_extracted/ 2>/dev/null || true
           fi
 
-       Silber:
       - name: Build App Directory
         run: |
           mkdir -p Payload/CustomAudiobookReader.app
